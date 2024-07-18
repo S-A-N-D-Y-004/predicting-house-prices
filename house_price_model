@@ -1,0 +1,102 @@
+#importing libraries
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.datasets import fetch_california_housing
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+
+import warnings
+warnings.filterwarnings('ignore')
+
+#loading the data
+housing = fetch_california_housing()
+df = pd.DataFrame(housing.data, columns=housing.feature_names)
+df['PRICE'] = housing.target
+
+#displays the first few rows
+df.head()
+
+#explore the data
+
+#summary statistics
+df.describe()
+
+#Visualize the distribution of the target variable
+sns.histplot(df['PRICE'], kde=True)
+plt.title('Distribution of house Prices')
+plt.xlabel('Price in $100,000s')
+plt.ylabel("Frequency")
+plt.show()
+
+#visualize correlations
+plt.figure(figsize=(12, 8))
+correlation_matrix = df.corr().round(2)
+sns.heatmap(data=correlation_matrix, annot=True, cmap='coolwarm')
+plt.title('Correlation Matrix')
+plt.show()
+
+#preprocess the data
+
+#check for missing values
+df.isnull().sum()
+
+#separate features and target
+X = df.drop('PRICE', axis=1)
+y = df['PRICE']
+
+#split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+#standardize the data
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+#train the model
+
+#initialize and train the model
+model = LinearRegression()
+model.fit(X_train, y_train)
+
+#evaluate the model
+
+#predict on the test set
+y_pred = model.predict(X_test)
+
+#calculate evaluation metrices
+mae = mean_absolute_error(y_test, y_pred)
+mse = mean_squared_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+
+print(f'MAE: {mae}')
+print(f'MSE: {mse}')
+print(f'R2 Score: {r2}')
+
+#visualize the results 
+
+#plot the predicted vs actual prices
+plt.figure(figsize=(8, 6))
+plt.scatter(y_test, y_pred, alpha=0.7)
+plt.plot([min(y_test), max(y_test)], [min(y_test), max(y_test)], color='red', lw=2)
+plt.xlabel('Actual Prices')
+plt.ylabel('Predicted Prices')
+plt.title('Actual vs Predicted Prices')
+plt.show()
+
+#saving the model and scaler
+import joblib
+
+#save the trained model
+joblib.dump(model, 'house_price_model.pkl')
+
+#save the scaler
+joblib.dump(scaler, 'scaler.pkl')
+
+#load the trained model and scaler
+model = joblib.load('house_price_model.pkl')
+scaler = joblib.load('scaler.pkl')
